@@ -159,6 +159,7 @@ public class ObjectExtractor {
 		CommandLineAppEx cla = new CommandLineAppEx(sw);
 		cla.extractFile(pdfDocument2);
 		String data = sw.toString();
+		System.out.println("data=" + data);
 		ObjectMapper m = new ObjectMapper();
 		JSONArray arr = m.readValue(data, JSONArray.class);
 		return arr;
