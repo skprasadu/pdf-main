@@ -14,7 +14,7 @@ import net.sourceforge.tess4j.TesseractException;
 public class ObjectExtractorTest {
 
 	@Test
-	public void testExtractCsvString() throws IOException, TesseractException {
+	public void testExtractCsvString() throws Exception {
 		try (InputStream is = ObjectExtractorTest.class.getResourceAsStream("/ccl1-layout.json");
 				InputStream is1 = ObjectExtractorTest.class.getResourceAsStream("/CCL1.pdf");
 				PDDocument pdfDocument = PDDocument.load(is1)) {
@@ -26,7 +26,7 @@ public class ObjectExtractorTest {
 	}
 
 	@Test
-	public void testExtractJsonString() throws IOException, TesseractException {
+	public void testExtractJsonString() throws Exception {
 		try (InputStream is = ObjectExtractorTest.class.getResourceAsStream("/ccl1-layout.json");
 				InputStream is1 = ObjectExtractorTest.class.getResourceAsStream("/CCL1.pdf");
 				PDDocument pdfDocument = PDDocument.load(is1)) {

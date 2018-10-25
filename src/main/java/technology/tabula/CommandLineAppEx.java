@@ -57,7 +57,7 @@ public class CommandLineAppEx extends CommandLineApp {
             ObjectExtractor o = new ObjectExtractor(doc);
             String layout = IOUtils.toString(new FileInputStream(args[1]));
             System.out.println(o.extractJson(layout));
-        } catch (TesseractException | IOException e) {
+        } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }

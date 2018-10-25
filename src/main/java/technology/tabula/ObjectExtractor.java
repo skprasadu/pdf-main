@@ -18,7 +18,9 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pdfextract.util.Util;
 
+import ch.qos.logback.core.net.SyslogOutputStream;
 import net.sourceforge.tess4j.ITesseract.RenderedFormat;
+import net.sourceforge.tess4j.OCRResult;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
 
@@ -78,7 +80,7 @@ public class ObjectExtractor {
 		this.pdfDocument.close();
 	}
 
-	public String extractCsv(String layout) throws IOException, TesseractException {
+	public String extractCsv(String layout) throws Exception {
 		System.out.println("&&***********layout***************&&" + layout);
 		try (StringWriter sw = new StringWriter()) {
 			if (!isSearchablePdf(pdfDocument)) {
@@ -89,7 +91,9 @@ public class ObjectExtractor {
 					return extractCsvData(pd, layout, sw);
 				}
 			} else {
-				return extractCsvData(pdfDocument, layout, sw);
+				String str = extractCsvData(pdfDocument, layout, sw);
+				System.out.println("str: " + str);
+				return str;
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -103,25 +107,27 @@ public class ObjectExtractor {
 	}
 
 	private String extractCsvData(PDDocument pdfDocument2, String layout, StringWriter sw)
-			throws ParseException, IOException, JsonParseException, JsonMappingException {
+			throws Exception {
 		JSONArray arr = getTableJson(pdfDocument2, sw);
 
 		return Util.extractCsvFromPdfExtract(pdfDocument2, arr, layout);
 	}
 
 	private void generateSearchablePdf(UUID uuid, PDDocument pdfDocument2) throws TesseractException, IOException {
-		pdfDocument2.save(new File("tmp/" + uuid + "_in.pdf"));
-
+		File pdfFile = new File("tmp/" + uuid + "_in.pdf");
+		pdfDocument2.save(pdfFile);
+		Utils.deskewPDF(pdfFile);
+		
 		Tesseract instance = new Tesseract();
 
 		List<RenderedFormat> list = new ArrayList<RenderedFormat>();
 		list.add(RenderedFormat.PDF);
 
-		instance.createDocuments("tmp/" + uuid + "_in.pdf", "tmp/" + uuid + "_out", list);
+		instance.createDocuments(pdfFile.getPath(), "tmp/" + uuid + "_out", list);
 		System.out.println("converted");
 	}
 
-	public String extractJson(String layout) throws TesseractException {
+	public String extractJson(String layout) throws Exception {
 		System.out.println("&&***********layout***************&&" + layout);
 		try (StringWriter sw = new StringWriter()) {
 			if (!isSearchablePdf(pdfDocument)) {
@@ -148,7 +154,7 @@ public class ObjectExtractor {
 	}
 
 	private String extractJsonData(PDDocument pdfDocument2, String layout, StringWriter sw)
-			throws ParseException, IOException, JsonParseException, JsonMappingException {
+			throws Exception {
 		JSONArray arr = getTableJson(pdfDocument2, sw);
 
 		return Util.extractJsonFromPdfExtract(pdfDocument2, arr, layout);
@@ -159,6 +165,7 @@ public class ObjectExtractor {
 		CommandLineAppEx cla = new CommandLineAppEx(sw);
 		cla.extractFile(pdfDocument2);
 		String data = sw.toString();
+		System.out.println("data=" + data);
 		ObjectMapper m = new ObjectMapper();
 		JSONArray arr = m.readValue(data, JSONArray.class);
 		return arr;

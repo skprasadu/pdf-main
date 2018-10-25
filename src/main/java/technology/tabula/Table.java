@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
+import lombok.Getter;
+import lombok.Setter;
 import technology.tabula.extractors.ExtractionAlgorithm;
 
 @SuppressWarnings("serial")
@@ -30,6 +32,9 @@ public class Table extends Rectangle {
 	public int getColCount() { return colCount; }
 
 	public String getExtractionMethod() { return extractionMethod; }
+	
+	@Getter @Setter
+	private int pageNumber;
 
 	public void add(RectangularTextContainer chunk, int row, int col) {
 		this.merge(chunk);
