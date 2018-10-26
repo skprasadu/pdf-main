@@ -5,15 +5,28 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.PDPageContentStream.AppendMode;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
+import org.apache.pdfbox.pdmodel.graphics.image.LosslessFactory;
+import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.pdfbox.tools.imageio.ImageIOUtil;
+
+import com.recognition.software.jdeskew.ImageDeskew;
+
+import net.sourceforge.tess4j.util.ImageHelper;
 
 /**
  * @author manuel
@@ -270,7 +283,42 @@ public class Utils {
             ltp.getKey().setLine(p[0], p[1]);
         }
     }
-
+    
+	public static void deskewPDF(File file) throws InvalidPasswordException, IOException {
+		//File outputFile = new File(FilenameUtils.removeExtension(file.getName()) + ".pdf");
+		PDDocument document = PDDocument.load(file);
+		PDDocument output = new PDDocument();
+		PDFRenderer renderer = new PDFRenderer(document);
+		//List<BufferedImage> bufferedImageList = new ArrayList<>();
+		int pageCounter = 0;
+		//document.getPages().
+		for(PDPage page : document.getPages()) {
+			BufferedImage bufferedImage = renderer.renderImage(pageCounter);
+			ImageDeskew imageDeskew = new ImageDeskew(bufferedImage);
+			double skewAngle = imageDeskew.getSkewAngle();
+			System.out.println("Page " + pageCounter + " has a skew of " + skewAngle);
+			bufferedImage = ImageHelper.rotateImage(bufferedImage, -skewAngle);
+			PDPage newPage = new PDPage(new PDRectangle(bufferedImage.getWidth(), bufferedImage.getHeight()));
+			output.addPage(newPage);
+			PDImageXObject img = LosslessFactory.createFromImage(output, bufferedImage);
+            try (PDPageContentStream contentStream = new PDPageContentStream(output, newPage, AppendMode.APPEND, true, true)) {
+                // contentStream.drawImage(ximage, 20, 20 );
+                // better method inspired by http://stackoverflow.com/a/22318681/535646
+                // reduce this value if the image is too large
+                float scale = 1f;
+                contentStream.drawImage(img, 20, 20, img.getWidth() * scale, img.getHeight() * scale);
+                contentStream.close();
+            }
+			//bufferedImageList.add(bufferedImage);
+            pageCounter++;
+		}
+		document.close();
+		output.save(file);
+		output.close();
+		//return bufferedImageList;
+		//return outputFile;
+	}
+	
 	public static BufferedImage pageConvertToImage(PDPage page, int dpi, ImageType imageType) throws IOException {
 		try (PDDocument document = new PDDocument()) {
 			document.addPage(page);
